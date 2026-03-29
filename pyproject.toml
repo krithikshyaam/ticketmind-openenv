@@ -1,1 +1,16 @@
-Set-Content pyproject.toml "[build-system]`nrequires = [`"setuptools`"]`nbuild-backend = `"setuptools.backends.legacy:build`"`n`n[project]`nname = `"ticketmind-openenv`"`nversion = `"1.0.0`"`ndescription = `"TicketMind OpenEnv - Customer Support AI Environment`"`nrequires-python = `">=3.10`"`ndependencies = [`"fastapi>=0.110.0`",`"uvicorn>=0.29.0`",`"pydantic>=2.0.0`",`"requests>=2.31.0`",`"openai>=1.12.0`"]"
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "ticketmind-openenv"
+version = "1.0.0"
+description = "TicketMind OpenEnv"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn>=0.29.0",
+    "pydantic>=2.0.0",
+    "requests>=2.31.0",
+    "openai>=1.12.0",
+]

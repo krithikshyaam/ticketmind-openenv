@@ -103,7 +103,7 @@ class StepResult(BaseModel):
 # ─────────────────────────────────────────────
 
 class ResetRequest(BaseModel):
-    task_id: str
+    task_id: str = "ticket_classification"
     seed: Optional[int] = None
     config: Dict[str, Any] = Field(default_factory=dict)
 

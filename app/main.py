@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 import time
-
+from typing import Optional
 from .environment import env
 from .models import Action, ResetRequest
 from .tasks import list_tasks, TASK_REGISTRY
@@ -168,13 +168,9 @@ async def get_task_detail(task_id: str):
 # ─────────────────────────────────────────────────────────────────────────────
 
 @app.post("/reset")
-async def reset(req: ResetRequest):
-    """
-    Reset the environment and start a new episode.
-
-    Returns an Observation with the initial ticket and available actions.
-    The `session_id` in the response must be passed to all subsequent /step calls.
-    """
+async def reset(req: Optional[ResetRequest] = None):
+    if req is None:
+        req = ResetRequest()
     try:
         obs = env.reset(req)
         return obs.model_dump()

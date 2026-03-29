@@ -1,0 +1,184 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# TicketMind OpenEnv Specification
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: ticketmind
+version: "1.0.0"
+description: >
+  A real-world OpenEnv environment where AI agents learn to classify, respond
+  to, and fully resolve customer support tickets across three difficulty levels.
+  Modelled on a SaaS company's support workflow with realistic ticket scenarios
+  covering billing, technical, account, and feature-request categories.
+
+author: TicketMind Contributors
+license: MIT
+tags:
+  - customer-support
+  - nlp
+  - classification
+  - generation
+  - multi-step
+  - real-world
+
+# ── Environment API ───────────────────────────────────────────────────────────
+api:
+  reset:
+    endpoint: POST /reset
+    description: Initialise a new episode. Returns an Observation and session_id.
+    request_schema:
+      task_id:
+        type: string
+        required: true
+        enum: [ticket_classification, ticket_response, full_resolution]
+      seed:
+        type: integer
+        required: false
+        description: Random seed for reproducibility.
+      config:
+        type: object
+        required: false
+    response_schema: Observation
+
+  step:
+    endpoint: POST /step
+    description: Submit an action. Returns StepResult (observation, reward, done, info).
+    request_schema:
+      session_id:
+        type: string
+        required: true
+      action_type:
+        type: string
+        required: true
+        enum: [classify, respond, request_info, escalate, resolve]
+      payload:
+        type: object
+        required: true
+    response_schema: StepResult
+
+  state:
+    endpoint: GET /state/{session_id}
+    description: Read current session state without side effects.
+    response_schema: StateResponse
+
+# ── Observation Space ─────────────────────────────────────────────────────────
+observation_space:
+  type: object
+  fields:
+    session_id:
+      type: string
+    task_id:
+      type: string
+    ticket:
+      type: object
+      fields:
+        ticket_id:        { type: string }
+        subject:          { type: string }
+        body:             { type: string }
+        customer_name:    { type: string }
+        customer_email:   { type: string }
+        priority:         { type: string, enum: [low, medium, high, urgent] }
+        created_at:       { type: string, format: iso8601 }
+        attachments:      { type: array, items: { type: string } }
+        previous_tickets: { type: integer }
+    conversation_history:
+      type: array
+      items:
+        type: object
+        fields:
+          role:      { type: string, enum: [customer, agent, system] }
+          content:   { type: string }
+          timestamp: { type: string, format: iso8601 }
+    available_actions:
+      type: array
+      items: { type: string }
+    step:          { type: integer }
+    max_steps:     { type: integer }
+    done:          { type: boolean }
+    cumulative_reward: { type: number, minimum: 0.0, maximum: 1.0 }
+    info:          { type: object }
+
+# ── Action Space ──────────────────────────────────────────────────────────────
+action_space:
+  type: object
+  fields:
+    action_type:
+      type: string
+      enum: [classify, respond, request_info, escalate, resolve]
+    payload:
+      type: object
+      description: >
+        Varies by action_type. See /docs for per-action payload schemas.
+
+# ── Reward ────────────────────────────────────────────────────────────────────
+reward:
+  type: float
+  range: [0.0, 1.0]
+  description: >
+    Partial rewards are emitted at each step to provide dense training signal.
+    The final episode reward (from final_grade) is the holistic quality score
+    written to observation.cumulative_reward when done=true.
+
+# ── Tasks ─────────────────────────────────────────────────────────────────────
+tasks:
+  - id: ticket_classification
+    name: Ticket Classification
+    difficulty: easy
+    max_steps: 3
+    action_space: [classify, request_info]
+    description: >
+      Classify the incoming support ticket into the correct category.
+      Scored on classification accuracy, confidence calibration,
+      and whether clarification was used wisely.
+    scoring_rubric:
+      correct_category: 0.70
+      confidence_calibration: 0.10
+      used_clarification_wisely: 0.20
+
+  - id: ticket_response
+    name: Customer Response Generation
+    difficulty: medium
+    max_steps: 6
+    action_space: [classify, respond, request_info, escalate]
+    description: >
+      Craft an appropriate, empathetic response to the ticket.
+      Scored on relevance to the issue, correct escalation decision,
+      response tone, and whether info was requested when needed.
+    scoring_rubric:
+      response_relevance: 0.35
+      correct_escalation: 0.25
+      tone_quality: 0.20
+      appropriate_info_request: 0.20
+
+  - id: full_resolution
+    name: Full Ticket Resolution
+    difficulty: hard
+    max_steps: 10
+    action_space: [classify, respond, request_info, escalate, resolve]
+    description: >
+      End-to-end multi-step resolution: classify the ticket, gather any
+      necessary information, craft a response, decide whether to escalate,
+      and write a resolution summary. Partial credit at each milestone.
+    scoring_rubric:
+      correct_classification: 0.15
+      appropriate_escalation: 0.25
+      response_quality: 0.30
+      resolution_completeness: 0.20
+      efficiency: 0.10
+
+# ── Environment Config ────────────────────────────────────────────────────────
+environment:
+  host: "0.0.0.0"
+  port: 7860
+  session_storage: in-memory
+  max_concurrent_sessions: 200
+  session_ttl_seconds: 3600
+
+# ── Dependencies ──────────────────────────────────────────────────────────────
+dependencies:
+  python: ">=3.10"
+  packages:
+    - fastapi>=0.110.0
+    - uvicorn>=0.29.0
+    - pydantic>=2.0.0
+    - requests>=2.31.0
+    - openai>=1.12.0

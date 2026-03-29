@@ -1,0 +1,79 @@
+{
+  "environment": "TicketMind",
+  "model": "gpt-4o-mini",
+  "seed": 42,
+  "tasks": [
+    {
+      "task_id": "ticket_classification",
+      "seed": 42,
+      "final_score": 0.99,
+      "steps": 1,
+      "max_steps": 3,
+      "actions": [
+        "classify"
+      ],
+      "step_rewards": [
+        0.99
+      ],
+      "elapsed_seconds": 6.6
+    },
+    {
+      "task_id": "ticket_response",
+      "seed": 42,
+      "final_score": 0.0,
+      "steps": 6,
+      "max_steps": 6,
+      "actions": [
+        "classify",
+        "classify",
+        "classify",
+        "classify",
+        "classify",
+        "escalate"
+      ],
+      "step_rewards": [
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.25
+      ],
+      "elapsed_seconds": 23.1
+    },
+    {
+      "task_id": "full_resolution",
+      "seed": 42,
+      "final_score": 0.4,
+      "steps": 10,
+      "max_steps": 10,
+      "actions": [
+        "classify",
+        "classify",
+        "classify",
+        "classify",
+        "classify",
+        "classify",
+        "classify",
+        "classify",
+        "classify",
+        "escalate"
+      ],
+      "step_rewards": [
+        0.05,
+        0.05,
+        0.05,
+        0.05,
+        0.05,
+        0.05,
+        0.05,
+        0.05,
+        0.05,
+        0.1
+      ],
+      "elapsed_seconds": 33.3
+    }
+  ],
+  "average_score": 0.4633,
+  "elapsed_seconds": 63.0
+}

@@ -35,6 +35,9 @@ app.add_middleware(
 )
 
 _start_time = time.time()
+@app.on_event("startup")
+async def startup_event():
+    print("TicketMind started and ready!")
 
 
 # ─────────────────────────────────────────────────────────────────────────────

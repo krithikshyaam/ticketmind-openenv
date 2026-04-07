@@ -6,74 +6,52 @@
     {
       "task_id": "ticket_classification",
       "seed": 42,
-      "final_score": 0.99,
+      "final_score": 0.87,
       "steps": 1,
       "max_steps": 3,
       "actions": [
         "classify"
       ],
       "step_rewards": [
-        0.99
+        0.87
       ],
-      "elapsed_seconds": 6.6
+      "elapsed_seconds": 8.4
     },
     {
       "task_id": "ticket_response",
       "seed": 42,
-      "final_score": 0.0,
-      "steps": 6,
+      "final_score": 0.49,
+      "steps": 2,
       "max_steps": 6,
       "actions": [
         "classify",
-        "classify",
-        "classify",
-        "classify",
-        "classify",
-        "escalate"
+        "respond"
       ],
       "step_rewards": [
-        0.1,
-        0.1,
-        0.1,
-        0.1,
-        0.1,
-        0.25
+        0.095,
+        0.387
       ],
-      "elapsed_seconds": 23.1
+      "elapsed_seconds": 14.5
     },
     {
       "task_id": "full_resolution",
       "seed": 42,
-      "final_score": 0.4,
-      "steps": 10,
+      "final_score": 0.6597,
+      "steps": 3,
       "max_steps": 10,
       "actions": [
         "classify",
-        "classify",
-        "classify",
-        "classify",
-        "classify",
-        "classify",
-        "classify",
-        "classify",
-        "classify",
+        "respond",
         "escalate"
       ],
       "step_rewards": [
-        0.05,
-        0.05,
-        0.05,
-        0.05,
-        0.05,
-        0.05,
-        0.05,
-        0.05,
-        0.05,
+        0.048,
+        0.107,
         0.1
       ],
-      "elapsed_seconds": 33.3
+      "elapsed_seconds": 18.0
     }
   ],
-  "average_score": 0.4633,
-  "elapsed_seconds": 63.0
+  "average_score": 0.6732,
+  "elapsed_seconds": 41.0
 }

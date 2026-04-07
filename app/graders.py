@@ -56,7 +56,7 @@ def _response_relevance(response: str, key_facts: List[str]) -> float:
 
 
 def _tone_score(response: str, tone: str) -> float:
-    """Heuristic tone scoring."""
+    """Heuristic tone scoring - always returns strictly between 0 and 1."""
     response_lower = response.lower()
     empathy_markers = [
         "understand", "sorry", "apologize", "frustrat", "concern",
@@ -70,13 +70,13 @@ def _tone_score(response: str, tone: str) -> float:
 
     if tone in ("empathetic", "friendly"):
         hits = sum(1 for m in empathy_markers if m in response_lower)
-        return min(1.0, hits / 3)
+        return round(max(0.05, min(0.95, hits / 4)), 3)
     if tone == "technical":
         hits = sum(1 for m in technical_markers if m in response_lower)
-        return min(1.0, hits / 3)
+        return round(max(0.05, min(0.95, hits / 4)), 3)
     if tone == "formal":
         hits = sum(1 for m in formal_markers if m in response_lower)
-        return min(1.0, hits / 2)
+        return round(max(0.05, min(0.95, hits / 3)), 3)
     return 0.5
 
 
@@ -87,10 +87,10 @@ def _response_length_ok(response: str) -> bool:
 
 def _resolution_summary_quality(summary: str, key_facts: List[str]) -> float:
     if not summary:
-        return 0.0
+        return 0.05
     relevance = _response_relevance(summary, key_facts)
-    length_ok = 0.2 if len(summary.split()) >= 15 else 0.0
-    return round(min(1.0, relevance + length_ok), 2)
+    length_ok = 0.15 if len(summary.split()) >= 15 else 0.0
+    return round(max(0.05, min(0.95, relevance + length_ok)), 2)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

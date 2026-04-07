@@ -33,7 +33,7 @@ def _category_score(predicted: str, true_category: str, valid_categories: List[s
     predicted = predicted.lower().strip()
     true_category = true_category.lower().strip()
     if predicted == true_category:
-        return 1.0
+        return 0.95
     # Check if semantically related
     true_related = _RELATED_CATEGORIES.get(true_category, [])
     if predicted in true_related or predicted in valid_categories:
@@ -42,16 +42,17 @@ def _category_score(predicted: str, true_category: str, valid_categories: List[s
     for cat, related in _RELATED_CATEGORIES.items():
         if predicted in related and cat == true_category:
             return 0.5
-    return 0.0
+    return 0.05
 
 
 def _response_relevance(response: str, key_facts: List[str]) -> float:
-    """Score 0.0-1.0 for how many key facts the response acknowledges."""
+    """Score strictly between 0 and 1 for how many key facts the response acknowledges."""
     if not response or not key_facts:
-        return 0.0
+        return 0.05
     response_lower = response.lower()
     hits = sum(1 for f in key_facts if f.lower() in response_lower)
-    return round(hits / len(key_facts), 2)
+    raw = hits / len(key_facts)
+    return round(max(0.05, min(0.95, raw)), 2)
 
 
 def _tone_score(response: str, tone: str) -> float:
@@ -262,23 +263,23 @@ class ResponseGrader:
         if not self._responded:
             return 0.001, {"error": "Agent never responded to customer"}
 
-        escalation_score = 0.0
+        escalation_score = 0.05
         if self.needs_escalation and self._escalated:
-            escalation_score = 1.0
+            escalation_score = 0.95
         elif not self.needs_escalation and not self._escalated:
-            escalation_score = 1.0
+            escalation_score = 0.95
         elif self.needs_escalation and not self._escalated:
-            escalation_score = 0.0
+            escalation_score = 0.05
         else:
             escalation_score = 0.3  # escalated unnecessarily – mild penalty
 
-        info_score = 0.0
+        info_score = 0.05
         if self.required_info and self._requested_info:
-            info_score = 1.0
+            info_score = 0.95
         elif not self.required_info and not self._requested_info:
-            info_score = 1.0
+            info_score = 0.95
         elif self.required_info and not self._requested_info:
-            info_score = 0.0
+            info_score = 0.05
         else:
             info_score = 0.5
 
@@ -392,11 +393,11 @@ class ResolutionGrader:
     def final_grade(self, history: List[Dict[str, Any]]) -> Tuple[float, Dict[str, Any]]:
         # Escalation sub-score
         if self.needs_escalation and self._escalated:
-            esc_score = 1.0
+            esc_score = 0.95
         elif not self.needs_escalation and not self._escalated:
-            esc_score = 1.0
+            esc_score = 0.95
         elif self.needs_escalation and not self._escalated:
-            esc_score = 0.0
+            esc_score = 0.05
         else:
             esc_score = 0.2
 

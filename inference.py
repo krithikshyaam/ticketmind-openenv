@@ -48,7 +48,7 @@ client = OpenAI(api_key=HF_TOKEN or "sk-placeholder", base_url=API_BASE_URL)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def llm(messages: List[Dict[str, str]], temperature: float = 0.2) -> str:
-    """Call the LLM and return the assistant's text content."""
+    """Call the LLM and return the assistant text. Never raises exceptions."""
     for attempt in range(MAX_RETRIES + 1):
         try:
             resp = client.chat.completions.create(
@@ -59,11 +59,12 @@ def llm(messages: List[Dict[str, str]], temperature: float = 0.2) -> str:
             )
             return resp.choices[0].message.content.strip()
         except Exception as e:
+            print(f"    [LLM] Error attempt {attempt+1}/{MAX_RETRIES+1}: {e}")
             if attempt < MAX_RETRIES:
-                print(f"    [LLM] Retry {attempt+1}/{MAX_RETRIES} after error: {e}")
                 time.sleep(2 ** attempt)
             else:
-                raise
+                print("    [LLM] All retries failed, using fallback.")
+                return '{"action_type": "classify", "payload": {"category": "technical", "confidence": 0.5}}'  
 
 
 def parse_json_response(text: str) -> Dict[str, Any]:
@@ -326,7 +327,19 @@ def main() -> None:
 
     for task_id in tasks:
         t0 = time.time()
-        result = run_task(task_id, seed=SEED, verbose=True)
+        try:
+            result = run_task(task_id, seed=SEED, verbose=True)
+        except Exception as e:
+            print(f"  [ERROR] Task {task_id} failed: {e}")
+            result = {
+                "task_id": task_id,
+                "seed": SEED,
+                "final_score": 0.0,
+                "steps": 0,
+                "max_steps": 10,
+                "actions": [],
+                "step_rewards": [],
+            }
         result["elapsed_seconds"] = round(time.time() - t0, 1)
         results.append(result)
 

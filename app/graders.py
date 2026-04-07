@@ -11,6 +11,11 @@ from typing import Any, Dict, List, Optional, Tuple
 from .tasks import get_ticket
 
 
+def _clamp(score: float) -> float:
+    """Ensure score is strictly between 0.0 and 1.0 (exclusive)."""
+    return round(max(0.001, min(0.999, float(score))), 4)
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Shared helpers
 # ─────────────────────────────────────────────────────────────────────────────
@@ -147,7 +152,7 @@ class ClassificationGrader:
                 "conf_score": conf_score,
                 "clarif_penalty": clarif_penalty,
             }
-            return round(reward, 3), info
+            return _clamp(reward), info
 
         if action_type == "request_info":
             # Mild positive signal if the ticket actually needs info
@@ -161,12 +166,12 @@ class ClassificationGrader:
         """Final episode score after all steps."""
         classify_actions = [h for h in history if h["action_type"] == "classify"]
         if not classify_actions:
-            return 0.0, {"error": "No classify action taken"}
+            return 0.001, {"error": "No classify action taken"}
         # Use the last classify action as final answer
         last = classify_actions[-1]
         reward, info = self.grade_step("classify", last["payload"], 0, history)
         info["final"] = True
-        return reward, info
+        return _clamp(reward), info
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -255,7 +260,7 @@ class ResponseGrader:
 
     def final_grade(self, history: List[Dict[str, Any]]) -> Tuple[float, Dict[str, Any]]:
         if not self._responded:
-            return 0.0, {"error": "Agent never responded to customer"}
+            return 0.001, {"error": "Agent never responded to customer"}
 
         escalation_score = 0.0
         if self.needs_escalation and self._escalated:
@@ -283,7 +288,7 @@ class ResponseGrader:
             + 0.20 * self._best_tone_score
             + 0.20 * info_score
         )
-        return round(final, 3), {
+        return _clamp(final), {
             "response_relevance": self._best_response_score,
             "escalation_score": escalation_score,
             "tone_score": self._best_tone_score,
@@ -412,7 +417,7 @@ class ResolutionGrader:
             + 0.20 * resolution
             + 0.10 * efficiency
         )
-        return round(final, 3), {
+        return _clamp(final), {
             "classification_score": self._class_score,
             "escalation_score": esc_score,
             "response_quality": resp_quality,

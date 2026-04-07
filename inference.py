@@ -33,7 +33,8 @@ from openai import OpenAI
 
 API_BASE_URL: str = os.environ.get("API_BASE_URL", "https://api.openai.com/v1")
 MODEL_NAME: str   = os.environ.get("MODEL_NAME", "gpt-4o-mini")
-HF_TOKEN: str     = os.environ.get("HF_TOKEN", "")
+HF_TOKEN: str     = os.environ.get("HF_TOKEN") or ""
+LOCAL_IMAGE_NAME: str = os.environ.get("LOCAL_IMAGE_NAME", "")
 ENV_URL: str      = os.environ.get("ENV_URL", "http://localhost:7860")
 SEED: int         = int(os.environ.get("SEED", "42"))
 MAX_RETRIES: int  = int(os.environ.get("MAX_RETRIES", "2"))
@@ -209,6 +210,9 @@ def run_task(task_id: str, seed: int = SEED, verbose: bool = True) -> Dict[str, 
     step_rewards: List[float] = []
     actions_taken: List[str] = []
 
+    # Structured log format
+    print(f"[START] task={task_id} session={session_id[:8]} ticket={obs['ticket']['ticket_id']}")
+
     while not episode_done:
         # Build LLM prompt
         user_msg = build_user_prompt(obs, task_id)
@@ -251,11 +255,13 @@ def run_task(task_id: str, seed: int = SEED, verbose: bool = True) -> Dict[str, 
                     if k not in ("final",) and isinstance(v, (int, float, str, bool)):
                         print(f"    grader.{k}={v}")
 
+        print(f"[STEP] task={task_id} step={len(step_rewards)} action={action_type} reward={step_reward:.3f} done={episode_done}")
         obs = result["observation"]
 
         if episode_done:
             info = result.get("info", {})
             final_score = info.get("final_score", info.get("cumulative_reward", 0.0))
+            print(f"[END] task={task_id} final_score={final_score:.3f} steps={len(step_rewards)}")
             if verbose:
                 print(f"\n  ── Episode complete ──")
                 print(f"  Final score:  {final_score:.3f}")

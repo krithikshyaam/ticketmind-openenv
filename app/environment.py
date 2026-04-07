@@ -82,7 +82,7 @@ class TicketMindEnv:
             "max_steps": task["max_steps"],
             "done": False,
             "truncated": False,
-            "cumulative_reward": 0.0,
+            "cumulative_reward": 0.001,
             "conversation_history": [],
             "action_history": [],
             "seed": req.seed,
@@ -99,7 +99,7 @@ class TicketMindEnv:
             obs = self._make_observation(session, info={"error": "Episode already done"})
             return StepResult(
                 observation=obs,
-                reward=0.0,
+                reward=0.001,
                 done=True,
                 truncated=session["truncated"],
                 info={"error": "Episode already done"},
@@ -117,7 +117,7 @@ class TicketMindEnv:
             )
             return StepResult(
                 observation=obs,
-                reward=0.0,
+                reward=0.001,
                 done=False,
                 info={"error": f"Invalid action: {action_type}"},
             )

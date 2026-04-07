@@ -440,7 +440,8 @@ def build_grader(task_id: str, ticket_id: str, max_steps: int = 10):
         return ResponseGrader(ticket_id)
     if task_id == "full_resolution":
         return ResolutionGrader(ticket_id, max_steps=max_steps)
-    raise ValueError(f"Unknown task_id: {task_id}")"""
+    raise ValueError(f"Unknown task_id: {task_id}")
+"""
 TicketMind – Agent Graders
 Each grader scores 0.0 – 1.0 based on the agent's action history.
 Partial credit is emitted at each step for training signal density.

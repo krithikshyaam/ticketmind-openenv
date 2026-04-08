@@ -352,6 +352,7 @@ def main() -> None:
     for r in results:
         diff = difficulty_map.get(r["task_id"], "?")
         score = max(0.001, min(0.999, float(r["final_score"])))
+        r["final_score"] = score
         all_scores.append(score)
         print("  " + r["task_id"] + " (" + diff + ") = " + str(round(score, 3)))
 

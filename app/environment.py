@@ -137,6 +137,8 @@ class TicketMindEnv:
         step_reward, grade_info = grader.grade_step(
             action_type, payload, session["step"], session["action_history"]
         )
+        # Clamp step reward strictly between 0 and 1
+        step_reward = round(max(0.001, min(0.999, float(step_reward))), 4)
         session["cumulative_reward"] = round(
             max(0.001, min(0.999, session["cumulative_reward"] + step_reward)), 4
         )

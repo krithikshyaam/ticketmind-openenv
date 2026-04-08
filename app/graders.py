@@ -220,7 +220,7 @@ class ResponseGrader:
             cat_score = _category_score(predicted, self.true_category, self.valid_categories)
             self._classified_correctly = cat_score >= 0.5
             # Small positive signal for correct classification
-            return round(0.1 * cat_score, 3), info
+            return round(max(0.001, 0.1 * cat_score), 3), info
 
         if action_type == "request_info":
             self._requested_info = True
@@ -347,7 +347,7 @@ class ResolutionGrader:
         if action_type == "classify":
             predicted = payload.get("category", "")
             self._class_score = _category_score(predicted, self.true_category, self.valid_categories)
-            return round(0.05 * self._class_score, 3), info
+            return round(max(0.001, 0.05 * self._class_score), 3), info
 
         if action_type == "request_info":
             questions = payload.get("questions", [])
@@ -362,7 +362,7 @@ class ResolutionGrader:
             tone_s = _tone_score(message, tone)
             self._best_response_score = max(self._best_response_score, relevance)
             self._best_tone = max(self._best_tone, tone_s)
-            step_reward = 0.10 * relevance + 0.05 * tone_s
+            step_reward = max(0.001, 0.10 * relevance + 0.05 * tone_s)
             info.update({"relevance": relevance, "tone": tone_s})
             return round(step_reward, 3), info
 
@@ -379,7 +379,7 @@ class ResolutionGrader:
             summary_q = _resolution_summary_quality(summary, self.key_facts)
             type_match = 0.95 if res_type == self.expected_resolution_type else 0.3
             self._resolution_score = 0.6 * summary_q + 0.4 * type_match
-            step_reward = 0.10 * self._resolution_score
+            step_reward = max(0.001, 0.10 * self._resolution_score)
             info.update({
                 "summary_quality": summary_q,
                 "type_match": type_match,

@@ -1,3 +1,4 @@
+from typing import Optional
 """
 TicketMind OpenEnv – FastAPI Application
 Implements the OpenEnv REST spec: reset() / step() / state()
@@ -7,7 +8,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 import time
-from typing import Optional
+
 from .environment import env
 from .models import Action, ResetRequest
 from .tasks import list_tasks, TASK_REGISTRY
@@ -35,9 +36,6 @@ app.add_middleware(
 )
 
 _start_time = time.time()
-@app.on_event("startup")
-async def startup_event():
-    print("TicketMind started and ready!")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -169,6 +167,12 @@ async def get_task_detail(task_id: str):
 
 @app.post("/reset")
 async def reset(req: Optional[ResetRequest] = None):
+    """
+    Reset the environment and start a new episode.
+
+    Returns an Observation with the initial ticket and available actions.
+    The `session_id` in the response must be passed to all subsequent /step calls.
+    """
     if req is None:
         req = ResetRequest()
     try:

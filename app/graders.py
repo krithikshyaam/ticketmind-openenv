@@ -159,15 +159,15 @@ class ClassificationGrader:
             # Mild positive signal if the ticket actually needs info
             reward = 0.15 if self.required_info else -0.05
             info = {"clarification_needed": bool(self.required_info)}
-            return round(max(0.001, reward), 3), info
+            return _clamp(reward), info
 
-        return 0.001, {"note": "no reward for this action in classification task"}
+        return _clamp(0.001), {"note": "no reward for this action in classification task"}
 
     def final_grade(self, history: List[Dict[str, Any]]) -> Tuple[float, Dict[str, Any]]:
         """Final episode score after all steps."""
         classify_actions = [h for h in history if h["action_type"] == "classify"]
         if not classify_actions:
-            return 0.001, {"error": "No classify action taken"}
+            return _clamp(0.001), {"error": "No classify action taken"}
         # Use the last classify action as final answer
         last = classify_actions[-1]
         reward, info = self.grade_step("classify", last["payload"], 0, history)
@@ -220,7 +220,7 @@ class ResponseGrader:
             cat_score = _category_score(predicted, self.true_category, self.valid_categories)
             self._classified_correctly = cat_score >= 0.5
             # Small positive signal for correct classification
-            return round(max(0.001, 0.1 * cat_score), 3), info
+            return _clamp(0.1 * cat_score), info
 
         if action_type == "request_info":
             self._requested_info = True
@@ -231,7 +231,7 @@ class ResponseGrader:
             else:
                 # Slight penalty for unnecessary clarification
                 reward = 0.05
-            return round(max(0.001, reward), 3), info
+            return _clamp(reward), info
 
         if action_type == "respond":
             message = payload.get("message", "")
@@ -246,7 +246,7 @@ class ResponseGrader:
             self._best_response_score = max(self._best_response_score, relevance)
             self._best_tone_score = max(self._best_tone_score, tone_s)
             info.update({"relevance": relevance, "tone_score": tone_s})
-            return round(step_reward, 3), info
+            return _clamp(step_reward), info
 
         if action_type == "escalate":
             self._escalated = True
@@ -255,13 +255,13 @@ class ResponseGrader:
             else:
                 reward = -0.10  # unnecessary escalation
             info["needs_escalation"] = self.needs_escalation
-            return round(max(0.001, reward), 3), info
+            return _clamp(reward), info
 
-        return 0.001, info
+        return _clamp(0.001), info
 
     def final_grade(self, history: List[Dict[str, Any]]) -> Tuple[float, Dict[str, Any]]:
         if not self._responded:
-            return 0.001, {"error": "Agent never responded to customer"}
+            return _clamp(0.001), {"error": "Agent never responded to customer"}
 
         escalation_score = 0.05
         if self.needs_escalation and self._escalated:
@@ -347,12 +347,12 @@ class ResolutionGrader:
         if action_type == "classify":
             predicted = payload.get("category", "")
             self._class_score = _category_score(predicted, self.true_category, self.valid_categories)
-            return round(max(0.001, 0.05 * self._class_score), 3), info
+            return _clamp(0.05 * self._class_score), info
 
         if action_type == "request_info":
             questions = payload.get("questions", [])
             reward = 0.05 if self.required_info and questions else 0.001
-            return round(max(0.001, reward), 3), info
+            return _clamp(reward), info
 
         if action_type == "respond":
             message = payload.get("message", "")
@@ -364,13 +364,13 @@ class ResolutionGrader:
             self._best_tone = max(self._best_tone, tone_s)
             step_reward = max(0.001, 0.10 * relevance + 0.05 * tone_s)
             info.update({"relevance": relevance, "tone": tone_s})
-            return round(step_reward, 3), info
+            return _clamp(step_reward), info
 
         if action_type == "escalate":
             self._escalated = True
             reward = 0.10 if self.needs_escalation else 0.001
             info["needs_escalation"] = self.needs_escalation
-            return round(max(0.001, min(0.999, reward)), 4), info
+            return _clamp(reward), info
 
         if action_type == "resolve":
             self._resolved = True
@@ -386,9 +386,9 @@ class ResolutionGrader:
                 "resolution_type_predicted": res_type,
                 "resolution_type_expected": self.expected_resolution_type,
             })
-            return round(step_reward, 3), info
+            return _clamp(step_reward), info
 
-        return 0.001, info
+        return _clamp(0.001), info
 
     def final_grade(self, history: List[Dict[str, Any]]) -> Tuple[float, Dict[str, Any]]:
         # Escalation sub-score

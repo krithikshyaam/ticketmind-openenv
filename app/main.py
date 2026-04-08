@@ -1,13 +1,13 @@
-from typing import Optional
 """
 TicketMind OpenEnv – FastAPI Application
-Implements the OpenEnv REST spec: reset() / step() / state()
+...
 """
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 import time
+from typing import Optional
 
 from .environment import env
 from .models import Action, ResetRequest

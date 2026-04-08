@@ -94,7 +94,7 @@ observation_space:
     step:          { type: integer }
     max_steps:     { type: integer }
     done:          { type: boolean }
-    cumulative_reward: { type: number, minimum: 0.0, maximum: 1.0 }
+    cumulative_reward: { type: number, minimum: 0.001, maximum: 0.999 }
     info:          { type: object }
 
 # ── Action Space ──────────────────────────────────────────────────────────────
@@ -112,7 +112,7 @@ action_space:
 # ── Reward ────────────────────────────────────────────────────────────────────
 reward:
   type: float
-  range: [0.0, 1.0]
+  range: [0.001, 0.999]
   description: >
     Partial rewards are emitted at each step to provide dense training signal.
     The final episode reward (from final_grade) is the holistic quality score

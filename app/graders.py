@@ -370,7 +370,7 @@ class ResolutionGrader:
             self._escalated = True
             reward = 0.10 if self.needs_escalation else 0.001
             info["needs_escalation"] = self.needs_escalation
-            return reward, info
+            return round(max(0.001, min(0.999, reward)), 4), info
 
         if action_type == "resolve":
             self._resolved = True

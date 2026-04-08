@@ -97,13 +97,17 @@ class StepResult(BaseModel):
     truncated: bool = False             # ran out of steps without resolving
     info: Dict[str, Any] = Field(default_factory=dict)
 
+    def model_post_init(self, __context: Any) -> None:
+        # Always clamp reward strictly between 0 and 1
+        object.__setattr__(self, "reward", round(max(0.001, min(0.999, float(self.reward))), 4))
+
 
 # ─────────────────────────────────────────────
 # Reset / State API
 # ─────────────────────────────────────────────
 
 class ResetRequest(BaseModel):
-    task_id: str = "ticket_classification"
+    task_id: str
     seed: Optional[int] = None
     config: Dict[str, Any] = Field(default_factory=dict)
 

@@ -6,21 +6,21 @@
     {
       "task_id": "ticket_classification",
       "seed": 42,
-      "final_score": 0.87,
+      "final_score": 0.9598,
       "steps": 1,
       "max_steps": 3,
       "actions": [
         "classify"
       ],
       "step_rewards": [
-        0.87
+        0.9598
       ],
-      "elapsed_seconds": 5.0
+      "elapsed_seconds": 7.8
     },
     {
       "task_id": "ticket_response",
       "seed": 42,
-      "final_score": 0.5775,
+      "final_score": 0.655,
       "steps": 2,
       "max_steps": 6,
       "actions": [
@@ -29,14 +29,14 @@
       ],
       "step_rewards": [
         0.095,
-        0.475
+        0.552
       ],
-      "elapsed_seconds": 10.4
+      "elapsed_seconds": 13.5
     },
     {
       "task_id": "full_resolution",
       "seed": 42,
-      "final_score": 0.6597,
+      "final_score": 0.6554,
       "steps": 3,
       "max_steps": 10,
       "actions": [
@@ -46,12 +46,12 @@
       ],
       "step_rewards": [
         0.048,
-        0.107,
+        0.104,
         0.1
       ],
-      "elapsed_seconds": 16.2
+      "elapsed_seconds": 22.4
     }
   ],
-  "average_score": 0.7024,
-  "elapsed_seconds": 31.6
+  "average_score": 0.7567,
+  "elapsed_seconds": 43.8
 }

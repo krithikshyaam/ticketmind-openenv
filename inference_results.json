@@ -15,12 +15,12 @@
       "step_rewards": [
         0.9598
       ],
-      "elapsed_seconds": 5.2
+      "elapsed_seconds": 5.5
     },
     {
       "task_id": "ticket_response",
       "seed": 42,
-      "final_score": 0.48,
+      "final_score": 0.5675,
       "steps": 2,
       "max_steps": 6,
       "actions": [
@@ -29,9 +29,9 @@
       ],
       "step_rewards": [
         0.095,
-        0.377
+        0.465
       ],
-      "elapsed_seconds": 12.1
+      "elapsed_seconds": 9.6
     },
     {
       "task_id": "full_resolution",
@@ -49,9 +49,9 @@
         0.104,
         0.1
       ],
-      "elapsed_seconds": 13.7
+      "elapsed_seconds": 13.2
     }
   ],
-  "average_score": 0.6984,
-  "elapsed_seconds": 30.9
+  "average_score": 0.7276,
+  "elapsed_seconds": 28.2
 }

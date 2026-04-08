@@ -52,7 +52,7 @@ def _response_relevance(response: str, key_facts: List[str]) -> float:
     response_lower = response.lower()
     hits = sum(1 for f in key_facts if f.lower() in response_lower)
     raw = hits / len(key_facts)
-    return round(max(0.05, min(0.95, raw)), 2)
+    return _clamp(raw)
 
 
 def _tone_score(response: str, tone: str) -> float:
@@ -70,13 +70,13 @@ def _tone_score(response: str, tone: str) -> float:
 
     if tone in ("empathetic", "friendly"):
         hits = sum(1 for m in empathy_markers if m in response_lower)
-        return round(max(0.05, min(0.95, hits / 4)), 3)
+        return _clamp(hits / 4)
     if tone == "technical":
         hits = sum(1 for m in technical_markers if m in response_lower)
-        return round(max(0.05, min(0.95, hits / 4)), 3)
+        return _clamp(hits / 4)
     if tone == "formal":
         hits = sum(1 for m in formal_markers if m in response_lower)
-        return round(max(0.05, min(0.95, hits / 3)), 3)
+        return _clamp(hits / 3)
     return 0.5
 
 
@@ -90,7 +90,7 @@ def _resolution_summary_quality(summary: str, key_facts: List[str]) -> float:
         return 0.05
     relevance = _response_relevance(summary, key_facts)
     length_ok = 0.15 if len(summary.split()) >= 15 else 0.001
-    return round(max(0.05, min(0.95, relevance + length_ok)), 2)
+    return _clamp(relevance + length_ok)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

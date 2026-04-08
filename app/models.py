@@ -37,7 +37,7 @@ class ConversationMessage(BaseModel):
 
 class Observation(BaseModel):
     session_id: str
-    task_id: str = "ticket_classification"
+    task_id: str
     ticket: CustomerTicket
     conversation_history: List[ConversationMessage] = Field(default_factory=list)
     available_actions: List[str]

@@ -23,7 +23,7 @@ app = FastAPI(
         "A real-world OpenEnv environment where AI agents learn to classify, "
         "respond to, and resolve customer support tickets across three difficulty levels."
     ),
-    version="1.0.0",
+    version="1.0.1",
     docs_url="/docs",
     redoc_url="/redoc",
 )

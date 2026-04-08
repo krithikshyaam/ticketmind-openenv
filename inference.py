@@ -372,6 +372,13 @@ def main() -> None:
         "average_score": round(avg_score, 4),
         "elapsed_seconds": elapsed_total,
     }
+    print("DEBUG FINAL TASK SCORES:", [r["final_score"] for r in results])
+
+    for r in results:
+        s = float(r["final_score"])
+        assert 0 < s < 1, f"Invalid final_score for {r['task_id']}: {s}"
+
+
     with open("inference_results.json", "w") as f:
         json.dump(output, f, indent=2)
     print("\n  Results written to inference_results.json")

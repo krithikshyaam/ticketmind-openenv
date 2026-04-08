@@ -181,8 +181,8 @@ class TicketMindEnv:
             done = True
             truncated = session["step"] >= session["max_steps"] and action_type not in terminal_actions
             final_score, final_info = grader.final_grade(session["action_history"])
-            # Clamp strictly between 0 and 1 (exclusive) as required
-            final_score = round(max(0.001, min(0.999, float(final_score))), 4)
+             
+            final_score = max(0.001, min(0.999, float(final_score)))
             session["cumulative_reward"] = final_score   # override with holistic score
             session["done"] = True
             session["truncated"] = truncated

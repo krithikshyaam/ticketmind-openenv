@@ -44,7 +44,7 @@ class Observation(BaseModel):
     step: int
     max_steps: int
     done: bool
-    cumulative_reward: float = 0.0
+    cumulative_reward: float = 0.001
     info: Dict[str, Any] = Field(default_factory=dict)
 
 
@@ -54,7 +54,7 @@ class Observation(BaseModel):
 
 class ClassifyPayload(BaseModel):
     category: str                       # e.g. "billing", "technical", "account", etc.
-    confidence: float = Field(ge=0.0, le=1.0, default=1.0)
+    confidence: float = Field(ge=0.001, le=0.999, default=0.9)
     sub_category: Optional[str] = None
 
 
@@ -77,7 +77,7 @@ class EscalatePayload(BaseModel):
 class ResolvePayload(BaseModel):
     resolution_summary: str
     resolution_type: Literal["answered", "refunded", "fixed", "escalated", "no_action"]
-    customer_satisfaction_predicted: float = Field(ge=0.0, le=1.0, default=0.8)
+    customer_satisfaction_predicted: float = Field(ge=0.001, le=0.999, default=0.8)
 
 
 class Action(BaseModel):

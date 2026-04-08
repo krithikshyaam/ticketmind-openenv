@@ -89,7 +89,7 @@ def _resolution_summary_quality(summary: str, key_facts: List[str]) -> float:
     if not summary:
         return 0.05
     relevance = _response_relevance(summary, key_facts)
-    length_ok = 0.15 if len(summary.split()) >= 15 else 0.0
+    length_ok = 0.15 if len(summary.split()) >= 15 else 0.001
     return round(max(0.05, min(0.95, relevance + length_ok)), 2)
 
 
@@ -126,17 +126,17 @@ class ClassificationGrader:
 
         if action_type == "classify":
             predicted = payload.get("category", "")
-            confidence = float(payload.get("confidence", 1.0))
+            confidence = float(payload.get("confidence", 0.9))
             cat_score = _category_score(predicted, self.true_category, self.valid_categories)
 
             # Confidence calibration: reward certainty when correct, penalise overconfidence when wrong
-            if cat_score == 1.0:
-                conf_score = confidence  # high confidence + correct = good
+            if cat_score >= 0.9:
+                conf_score = round(max(0.001, min(0.999, confidence)), 3)  # high confidence + correct = good
             else:
-                conf_score = 1.0 - confidence  # low confidence when wrong = partially ok
+                conf_score = round(max(0.001, min(0.999, 1.0 - confidence)), 3)  # low confidence when wrong = partially ok
 
             # Penalty for unnecessary request_info on tickets that have enough info
-            clarif_penalty = 0.0
+            clarif_penalty = 0.001
             used_clarif = any(h["action_type"] == "request_info" for h in history)
             if used_clarif and not self.required_info:
                 clarif_penalty = 0.2  # wasted a step
@@ -203,8 +203,8 @@ class ResponseGrader:
         self._responded: bool = False
         self._escalated: bool = False
         self._requested_info: bool = False
-        self._best_response_score: float = 0.0
-        self._best_tone_score: float = 0.0
+        self._best_response_score: float = 0.001
+        self._best_tone_score: float = 0.001
 
     def grade_step(
         self,
@@ -240,7 +240,7 @@ class ResponseGrader:
 
             relevance = _response_relevance(message, self.key_facts)
             tone_s = _tone_score(message, tone)
-            length_ok = 0.1 if _response_length_ok(message) else 0.0
+            length_ok = 0.1 if _response_length_ok(message) else 0.001
 
             step_reward = 0.35 * relevance + 0.20 * tone_s + length_ok
             self._best_response_score = max(self._best_response_score, relevance)
@@ -325,13 +325,13 @@ class ResolutionGrader:
         self.max_steps = max_steps
 
         # Running state
-        self._class_score: float = 0.0
+        self._class_score: float = 0.001
         self._escalated: bool = False
         self._responded: bool = False
         self._resolved: bool = False
-        self._best_response_score: float = 0.0
-        self._best_tone: float = 0.0
-        self._resolution_score: float = 0.0
+        self._best_response_score: float = 0.001
+        self._best_tone: float = 0.001
+        self._resolution_score: float = 0.001
         self._steps_used: int = 0
 
     def grade_step(
@@ -403,6 +403,7 @@ class ResolutionGrader:
 
         # Response quality (tone + relevance average)
         resp_quality = (self._best_response_score * 0.7 + self._best_tone * 0.3) if self._responded else 0.001
+
         # Efficiency: fraction of steps unused (reward for finishing early)
         steps_used = max(1, self._steps_used)
         efficiency = max(0.001, min(0.999, 1.0 - (steps_used / self.max_steps)))

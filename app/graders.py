@@ -368,7 +368,7 @@ class ResolutionGrader:
 
         if action_type == "escalate":
             self._escalated = True
-            reward = 0.10 if self.needs_escalation else 0.0
+            reward = 0.10 if self.needs_escalation else 0.001
             info["needs_escalation"] = self.needs_escalation
             return reward, info
 
@@ -377,7 +377,7 @@ class ResolutionGrader:
             summary = payload.get("resolution_summary", "")
             res_type = payload.get("resolution_type", "answered")
             summary_q = _resolution_summary_quality(summary, self.key_facts)
-            type_match = 1.0 if res_type == self.expected_resolution_type else 0.3
+            type_match = 0.95 if res_type == self.expected_resolution_type else 0.3
             self._resolution_score = 0.6 * summary_q + 0.4 * type_match
             step_reward = 0.10 * self._resolution_score
             info.update({
@@ -402,14 +402,13 @@ class ResolutionGrader:
             esc_score = 0.2
 
         # Response quality (tone + relevance average)
-        resp_quality = (self._best_response_score * 0.7 + self._best_tone * 0.3) if self._responded else 0.0
-
+        resp_quality = (self._best_response_score * 0.7 + self._best_tone * 0.3) if self._responded else 0.001
         # Efficiency: fraction of steps unused (reward for finishing early)
         steps_used = max(1, self._steps_used)
         efficiency = max(0.001, min(0.999, 1.0 - (steps_used / self.max_steps)))
 
         # Resolution completeness
-        resolution = self._resolution_score if self._resolved else 0.0
+        resolution = self._resolution_score if self._resolved else 0.001
 
         final = (
             0.15 * self._class_score

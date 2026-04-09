@@ -6,7 +6,7 @@ Runs an LLM-powered agent across all three tasks and reports reproducible scores
 Required environment variables:
     API_BASE_URL   The OpenAI-compatible API base URL
     MODEL_NAME     The model identifier
-    HF_TOKEN       Your API key / Hugging Face token
+    API_KEY        Your API key
 """
 
 import json
@@ -18,19 +18,17 @@ from typing import Any, Dict, List, Optional
 import requests
 from openai import OpenAI
 
-# Configuration
-API_BASE_URL: str = os.environ.get("API_BASE_URL", "https://api.openai.com/v1")
+# Configuration - no fallbacks for required vars
+API_BASE_URL: str = os.environ["API_BASE_URL"]
 MODEL_NAME: str = os.environ.get("MODEL_NAME", "gpt-4o-mini")
-HF_TOKEN: str = os.environ.get("HF_TOKEN") or ""
+API_KEY: str = os.environ["API_KEY"]
+HF_TOKEN: str = os.environ.get("HF_TOKEN", "")  # kept for compatibility
 LOCAL_IMAGE_NAME: str = os.environ.get("LOCAL_IMAGE_NAME", "")
-ENV_URL: str = os.environ.get("ENV_URL", "http://localhost:7860")
+ENV_URL: str = os.environ.get("ENV_URL", "https://krithik1-ticketmind-openenv.hf.space")
 SEED: int = int(os.environ.get("SEED", "42"))
 MAX_RETRIES: int = int(os.environ.get("MAX_RETRIES", "2"))
 
-if not HF_TOKEN:
-    print("[WARN] HF_TOKEN is not set. LLM calls may fail.")
-
-client = OpenAI(api_key=HF_TOKEN or "sk-placeholder", base_url=API_BASE_URL)
+client = OpenAI(api_key=API_KEY, base_url=API_BASE_URL)
 
 
 def llm(messages: List[Dict[str, str]], temperature: float = 0.2) -> str:
@@ -45,11 +43,11 @@ def llm(messages: List[Dict[str, str]], temperature: float = 0.2) -> str:
             )
             return resp.choices[0].message.content.strip()
         except Exception as e:
-            print(f"    [LLM] Error attempt {attempt+1}/{MAX_RETRIES+1}: {e}")
+            print(f"    [LLM] Error attempt {attempt+1}/{MAX_RETRIES+1}: {e}", flush=True)
             if attempt < MAX_RETRIES:
                 time.sleep(2 ** attempt)
             else:
-                print("    [LLM] All retries failed, using fallback.")
+                print("    [LLM] All retries failed, using fallback.", flush=True)
                 return '{"action_type": "classify", "payload": {"category": "technical", "confidence": 0.5}}'
 
 
@@ -199,9 +197,9 @@ def force_action_override(action_type, payload, task_id, actions_taken, obs):
 def run_task(task_id: str, seed: int = SEED, verbose: bool = True) -> Dict[str, Any]:
     """Run one full episode for a task."""
     if verbose:
-        print("\n" + "="*60)
-        print("  TASK: " + task_id + "  (seed=" + str(seed) + ")")
-        print("="*60)
+        print("\n" + "="*60, flush=True)
+        print("  TASK: " + task_id + "  (seed=" + str(seed) + ")", flush=True)
+        print("="*60, flush=True)
 
     obs = env_reset(task_id, seed=seed)
     session_id = obs["session_id"]
@@ -209,33 +207,15 @@ def run_task(task_id: str, seed: int = SEED, verbose: bool = True) -> Dict[str, 
 
     if verbose:
         ticket = obs["ticket"]
-        print("  Ticket: [" + ticket["ticket_id"] + "] " + ticket["subject"])
-        print("  Priority: " + ticket["priority"] + "  |  Max steps: " + str(max_steps))
+        print("  Ticket: [" + ticket["ticket_id"] + "] " + ticket["subject"], flush=True)
+        print("  Priority: " + ticket["priority"] + "  |  Max steps: " + str(max_steps), flush=True)
 
-    print("[START] task=" + task_id + " session=" + session_id[:8] + " ticket=" + obs["ticket"]["ticket_id"])
+    print(f"[START] task={task_id} session={session_id[:8]} ticket={obs['ticket']['ticket_id']}", flush=True)
 
     episode_done = False
     final_score = 0.001
     step_rewards: List[float] = []
     actions_taken: List[str] = []
-
-    # Deterministic fallback sequences per task (used if LLM unavailable)
-    FALLBACK_SEQUENCES = {
-        "ticket_classification": [
-            ("classify", {"category": "billing", "confidence": 0.9}),
-        ],
-        "ticket_response": [
-            ("classify", {"category": "technical", "confidence": 0.9}),
-            ("respond", {"message": "Thank you for contacting us. We sincerely apologize for the inconvenience. Our team is investigating this issue urgently and will provide a resolution shortly.", "tone": "empathetic"}),
-        ],
-        "full_resolution": [
-            ("classify", {"category": "technical", "confidence": 0.9}),
-            ("respond", {"message": "We understand the urgency of your situation and sincerely apologize for the inconvenience. Our engineering team is investigating this critical issue immediately.", "tone": "empathetic"}),
-            ("escalate", {"reason": "Critical issue requiring immediate engineering attention", "target_team": "engineering"}),
-        ],
-    }
-    fallback_seq = FALLBACK_SEQUENCES.get(task_id, [])
-    fallback_idx = 0
 
     while not episode_done:
         user_msg = build_user_prompt(obs, task_id, actions_taken)
@@ -251,23 +231,18 @@ def run_task(task_id: str, seed: int = SEED, verbose: bool = True) -> Dict[str, 
         payload = parsed.get("payload", {})
 
         action_type, payload = force_action_override(action_type, payload, task_id, actions_taken, obs)
-        
-        # If still stuck or invalid, use deterministic fallback
-        if fallback_idx < len(fallback_seq) and action_type not in obs["available_actions"]:
-            action_type, payload = fallback_seq[fallback_idx]
-            fallback_idx += 1
 
         if verbose:
-            print("\n  Step " + str(obs["step"] + 1) + ": action=" + action_type)
+            print("\n  Step " + str(obs["step"] + 1) + ": action=" + action_type, flush=True)
             if action_type == "classify":
-                print("    category=" + str(payload.get("category")) + "  confidence=" + str(payload.get("confidence")))
+                print("    category=" + str(payload.get("category")) + "  confidence=" + str(payload.get("confidence")), flush=True)
             elif action_type == "respond":
                 msg = payload.get("message", "")
-                print("    tone=" + str(payload.get("tone")) + "  msg=" + msg[:80] + "...")
+                print("    tone=" + str(payload.get("tone")) + "  msg=" + msg[:80] + "...", flush=True)
             elif action_type == "escalate":
-                print("    reason=" + str(payload.get("reason", ""))[:80])
+                print("    reason=" + str(payload.get("reason", ""))[:80], flush=True)
             elif action_type == "resolve":
-                print("    type=" + str(payload.get("resolution_type")))
+                print("    type=" + str(payload.get("resolution_type")), flush=True)
 
         result = env_step(session_id, action_type, payload)
         episode_done = result["done"]
@@ -276,26 +251,26 @@ def run_task(task_id: str, seed: int = SEED, verbose: bool = True) -> Dict[str, 
         actions_taken.append(action_type)
 
         if verbose:
-            print("    reward=" + str(round(step_reward, 3)) + "  done=" + str(episode_done))
+            print("    reward=" + str(round(step_reward, 3)) + "  done=" + str(episode_done), flush=True)
             grader_info = result.get("info", {}).get("grader_info", {})
             if grader_info:
                 for k, v in grader_info.items():
                     if k not in ("final",) and isinstance(v, (int, float, str, bool)):
-                        print("    grader." + k + "=" + str(v))
+                        print("    grader." + k + "=" + str(v), flush=True)
 
-        print("[STEP] task=" + task_id + " step=" + str(len(step_rewards)) + " action=" + action_type + " reward=" + str(round(step_reward, 3)) + " done=" + str(episode_done))
+        print(f"[STEP] task={task_id} step={len(step_rewards)} action={action_type} reward={step_reward:.3f} done={episode_done}", flush=True)
         obs = result["observation"]
 
         if episode_done:
             info = result.get("info", {})
             final_score = info.get("final_score", info.get("cumulative_reward", 0.001))
             final_score = max(0.001, min(0.999, float(final_score)))
-            print("[END] task=" + task_id + " final_score=" + str(round(final_score, 3)) + " steps=" + str(len(step_rewards)))
+            print(f"[END] task={task_id} score={final_score:.3f} steps={len(step_rewards)}", flush=True)
             if verbose:
-                print("\n  -- Episode complete --")
-                print("  Final score:  " + str(round(final_score, 3)))
-                print("  Steps taken:  " + str(len(step_rewards)) + " / " + str(max_steps))
-                print("  Actions:      " + " -> ".join(actions_taken))
+                print("\n  -- Episode complete --", flush=True)
+                print("  Final score:  " + str(round(final_score, 3)), flush=True)
+                print("  Steps taken:  " + str(len(step_rewards)) + " / " + str(max_steps), flush=True)
+                print("  Actions:      " + " -> ".join(actions_taken), flush=True)
 
     return {
         "task_id": task_id,
@@ -309,14 +284,14 @@ def run_task(task_id: str, seed: int = SEED, verbose: bool = True) -> Dict[str, 
 
 
 def wait_for_env(max_wait: int = 60) -> bool:
-    print("Waiting for TicketMind at " + ENV_URL + " ...")
+    print("Waiting for TicketMind at " + ENV_URL + " ...", flush=True)
     deadline = time.time() + max_wait
     while time.time() < deadline:
         try:
             r = requests.get(f"{ENV_URL}/health", timeout=5)
             if r.status_code == 200:
                 data = r.json()
-                print("  Environment ready: " + data["environment"] + " v" + data["version"])
+                print("  Environment ready: " + data["environment"] + " v" + data["version"], flush=True)
                 return True
         except Exception:
             pass
@@ -325,17 +300,17 @@ def wait_for_env(max_wait: int = 60) -> bool:
 
 
 def main() -> None:
-    print("\n" + "="*60)
-    print("  TicketMind OpenEnv - Baseline Inference")
-    print("="*60)
-    print("  API_BASE_URL : " + API_BASE_URL)
-    print("  MODEL_NAME   : " + MODEL_NAME)
-    print("  ENV_URL      : " + ENV_URL)
-    print("  SEED         : " + str(SEED))
-    print("="*60)
+    print("\n" + "="*60, flush=True)
+    print("  TicketMind OpenEnv - Baseline Inference", flush=True)
+    print("="*60, flush=True)
+    print("  API_BASE_URL : " + API_BASE_URL, flush=True)
+    print("  MODEL_NAME   : " + MODEL_NAME, flush=True)
+    print("  ENV_URL      : " + ENV_URL, flush=True)
+    print("  SEED         : " + str(SEED), flush=True)
+    print("="*60, flush=True)
 
     if not wait_for_env(max_wait=60):
-        print("[ERROR] TicketMind environment is not reachable.")
+        print("[ERROR] TicketMind environment is not reachable.", flush=True)
         sys.exit(1)
 
     tasks = ["ticket_classification", "ticket_response", "full_resolution"]
@@ -347,7 +322,7 @@ def main() -> None:
         try:
             result = run_task(task_id, seed=SEED, verbose=True)
         except Exception as e:
-            print("  [ERROR] Task " + task_id + " failed: " + str(e))
+            print("  [ERROR] Task " + task_id + " failed: " + str(e), flush=True)
             result = {
                 "task_id": task_id,
                 "seed": SEED,
@@ -361,9 +336,9 @@ def main() -> None:
         results.append(result)
 
     elapsed_total = round(time.time() - total_start, 1)
-    print("\n" + "="*60)
-    print("  RESULTS SUMMARY")
-    print("="*60)
+    print("\n" + "="*60, flush=True)
+    print("  RESULTS SUMMARY", flush=True)
+    print("="*60, flush=True)
 
     difficulty_map = {
         "ticket_classification": "easy",
@@ -376,12 +351,12 @@ def main() -> None:
         diff = difficulty_map.get(r["task_id"], "?")
         score = max(0.001, min(0.999, float(r["final_score"])))
         all_scores.append(score)
-        print("  " + r["task_id"] + " (" + diff + ") = " + str(round(score, 3)))
+        print("  " + r["task_id"] + " (" + diff + ") = " + str(round(score, 3)), flush=True)
 
     avg_score = sum(all_scores) / len(all_scores) if all_scores else 0.001
-    print("  Average = " + str(round(avg_score, 3)))
-    print("  Total elapsed: " + str(elapsed_total) + "s")
-    print("="*60)
+    print("  Average = " + str(round(avg_score, 3)), flush=True)
+    print("  Total elapsed: " + str(elapsed_total) + "s", flush=True)
+    print("="*60, flush=True)
 
     assert all(0.0 < s < 1.0 for s in all_scores), "Score out of range: " + str(all_scores)
     assert len(all_scores) == 3, "Expected exactly 3 task scores"
@@ -396,7 +371,7 @@ def main() -> None:
     }
     with open("inference_results.json", "w") as f:
         json.dump(output, f, indent=2)
-    print("\n  Results written to inference_results.json")
+    print("\n  Results written to inference_results.json", flush=True)
 
 
 if __name__ == "__main__":

@@ -15,12 +15,12 @@
       "step_rewards": [
         0.9598
       ],
-      "elapsed_seconds": 5.5
+      "elapsed_seconds": 8.5
     },
     {
       "task_id": "ticket_response",
       "seed": 42,
-      "final_score": 0.5675,
+      "final_score": 0.5275,
       "steps": 2,
       "max_steps": 6,
       "actions": [
@@ -29,14 +29,14 @@
       ],
       "step_rewards": [
         0.095,
-        0.465
+        0.425
       ],
-      "elapsed_seconds": 9.6
+      "elapsed_seconds": 12.6
     },
     {
       "task_id": "full_resolution",
       "seed": 42,
-      "final_score": 0.6554,
+      "final_score": 0.6377,
       "steps": 3,
       "max_steps": 10,
       "actions": [
@@ -45,13 +45,13 @@
         "escalate"
       ],
       "step_rewards": [
-        0.048,
-        0.104,
+        0.0475,
+        0.0946,
         0.1
       ],
-      "elapsed_seconds": 13.2
+      "elapsed_seconds": 22.0
     }
   ],
-  "average_score": 0.7276,
-  "elapsed_seconds": 28.2
+  "average_score": 0.7083,
+  "elapsed_seconds": 43.1
 }
